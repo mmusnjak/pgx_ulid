@@ -66,15 +66,13 @@ fn gen_ulid() -> ulid {
 
 #[pg_extern(immutable, parallel_safe)]
 fn ulid_from_uuid(input: Uuid) -> ulid {
-    let mut bytes = *input.as_bytes();
-    bytes.reverse();
-    ulid(u128::from_ne_bytes(bytes))
+    let bytes = *input.as_bytes();
+    ulid(u128::from_be_bytes(bytes))
 }
 
 #[pg_extern(immutable, parallel_safe)]
 fn ulid_to_uuid(input: ulid) -> Uuid {
-    let mut bytes = input.0.to_ne_bytes();
-    bytes.reverse();
+    let bytes = input.0.to_be_bytes();
     Uuid::from_bytes(bytes)
 }
 
@@ -107,7 +105,7 @@ mod tests {
     #[pg_test]
     fn test_null_to_ulid() {
         let result = Spi::get_one::<ulid>("SELECT NULL::ulid;").unwrap();
-        assert_eq!(None, result);
+        assert!(result.is_none());
     }
 
     #[pg_test]
